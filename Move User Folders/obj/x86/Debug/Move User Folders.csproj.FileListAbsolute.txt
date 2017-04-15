@@ -1,0 +1,8 @@
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\bin\Debug\Move User Folders.exe
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\bin\Debug\Move User Folders.pdb
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\obj\x86\Debug\Move_User_Folders.MainForm.resources
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\obj\x86\Debug\Move_User_Folders.Properties.Resources.resources
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\obj\x86\Debug\Move User Folders.csproj.GenerateResource.Cache
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\obj\x86\Debug\Move User Folders.exe
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\obj\x86\Debug\Move User Folders.pdb
+D:\Programming\Projects\Microsoft\Visual Studio 2010\Projects\Move User Folders\Move User Folders\obj\x86\Debug\Move User Folders.csprojResolveAssemblyReference.cache
