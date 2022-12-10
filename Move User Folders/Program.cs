@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 
-namespace Move_User_Folders
+namespace MUF
 {
     static class Program
     {

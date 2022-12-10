@@ -1,20 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.IO;
+﻿using System.IO;
 using Microsoft.VisualBasic.FileIO;
 
 public class Move
 {
-    public Move(string keyName, string sourcePath, string destinationPath)
-    {
-        if (!destinationPath.Equals(sourcePath)) // Если исходная и конечная папка не одна и таже
-        {
-            new Reg().SetItem(keyName, destinationPath); // Запись в реестр значений
+    private const string desktopIni = "\\desktop.ini";
 
-            File.SetAttributes(sourcePath, FileAttributes.Normal); // Установка обычного аттрибута исходной папки. Без этого аттрибута, папка не удалится
-            File.SetAttributes(destinationPath, FileAttributes.ReadOnly); // Установка аттрибута ReadOnly конечной поапки. Без этого аттрибута, не будет отображаться имя из desktop.ini
-            FileSystem.MoveDirectory(sourcePath, destinationPath, UIOption.AllDialogs, UICancelOption.DoNothing); // Собственно, само перемещение...
-        }
+
+    public Move(string key, string sourcePath, string targetPath, bool content)
+    {
+        /* apply entry in registry */
+        MUFRegistry.SetFolderValue(key, targetPath);
+
+        /* set source folder normal attr to be deleted */
+        File.SetAttributes(sourcePath, FileAttributes.Normal);
+
+        /* set target folder read-only to display folder name from desktop.ini */
+        File.SetAttributes(targetPath, FileAttributes.ReadOnly);
+
+        /* move desktop.ini if it exists */
+        if (File.Exists(sourcePath + desktopIni))
+            FileSystem.MoveFile(sourcePath + desktopIni, targetPath + desktopIni, true);
+
+        /* move content if necessary */
+        if (content)
+            FileSystem.MoveDirectory(sourcePath, targetPath, UIOption.AllDialogs, UICancelOption.DoNothing);
     }
 }

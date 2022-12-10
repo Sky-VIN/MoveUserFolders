@@ -1,141 +1,159 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
+using System.Diagnostics;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
-namespace Move_User_Folders
+
+
+namespace MUF
 {
     public partial class MainForm : Form
     {
-        private string path;
+        private bool modify = false;
+
+        private List<string[]> folders = new List<string[]>();
+        private List<string> newFolders = new List<string>();
+
 
         public MainForm()
         {
             InitializeComponent();
+
+            /* making app size smaller by icon size */
+            Icon = Resources.MainIcon;
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+
+        private void MainForm_Load(object sender, EventArgs e)
         {
-            // Чтение значений из реестра и присваивание их элементам
-            Reg reg = new Reg();
-            lDesktop.Text = reg.GetItem("Desktop");
-            lDownloads.Text = reg.GetItem("{374DE290-123F-4565-9164-39C4925E467B}");
-            lPersonal.Text = reg.GetItem("Personal");
-            lVideo.Text = reg.GetItem("My Video");
-            lMusic.Text = reg.GetItem("My Music");
-            lPictures.Text = reg.GetItem("My Pictures");
+            folders.Clear();
+            newFolders.Clear();
+
+            /* filling main list */
+            folders.Add(MUFRegistry.GetFolderValue(MUFRegistry.FolderKeys.DESKTOP));
+            folders.Add(MUFRegistry.GetFolderValue(MUFRegistry.FolderKeys.DOCS));
+            folders.Add(MUFRegistry.GetFolderValue(MUFRegistry.FolderKeys.VIDEOS));
+            folders.Add(MUFRegistry.GetFolderValue(MUFRegistry.FolderKeys.MUSIC));
+            folders.Add(MUFRegistry.GetFolderValue(MUFRegistry.FolderKeys.PICTURES));
+            folders.Add(MUFRegistry.GetFolderValue(MUFRegistry.FolderKeys.DOWNLOADS));
+
+            /* filling secondary list from main list */
+            foreach (string[] folder in folders)
+                newFolders.Add(folder[1]);
+            
+            cbFoldersList.SelectedIndex = 0;
+            cbFoldersList.Focus();
         }
 
-        private void Open_Click(object sender, EventArgs e)
+        /* message if there are changes */
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Назачение последней выбраной папки
-            fbDialog.SelectedPath = path;
+            if (modify)
+                MessageBox.Show(Resources.ModifyMessage, Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
 
+
+        /* Changing elemnts depending list */
+        private void cbFoldersList_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cbFoldersList.SelectedIndex == 0) folderImg.BackgroundImage = Resources.DesktopImage;
+            if (cbFoldersList.SelectedIndex == 1) folderImg.BackgroundImage = Resources.DocsImage;
+            if (cbFoldersList.SelectedIndex == 2) folderImg.BackgroundImage = Resources.VideosImage;
+            if (cbFoldersList.SelectedIndex == 3) folderImg.BackgroundImage = Resources.MusicImage;
+            if (cbFoldersList.SelectedIndex == 4) folderImg.BackgroundImage = Resources.PicturesImage;
+            if (cbFoldersList.SelectedIndex == 5) folderImg.BackgroundImage = Resources.DownloadsImage;
+
+            txtTarget.Text = newFolders[cbFoldersList.SelectedIndex];
+        }
+
+
+        private void btnBrowse_Click(object sender, EventArgs e)
+        {
             if (fbDialog.ShowDialog() == DialogResult.OK)
-            {
-                // Запись в переменную последней выбраной папки
-                path = fbDialog.SelectedPath;
+                txtTarget.Text = fbDialog.SelectedPath;
+        }
 
-                // Какая кнопка была нажата, тужа и пишем выбраную папку (switch сделать не смог)
-                if (sender == btnOpenDesktop) tbDesktop.Text = path;
-                else if (sender == btnOpenDownloads) tbDownloads.Text = path;
-                else if (sender == btnOpenPersonal) tbPersonal.Text = path;
-                else if (sender == btnOpenVideo) tbVideo.Text = path;
-                else if (sender == btnOpenMusic) tbMusic.Text = path;
-                else if (sender == btnOpenPictures) tbPictures.Text = path;
+
+        private void btnOpen_Click(object sender, EventArgs e)
+        {
+            if (DirectoryExists())
+                Process.Start("explorer.exe", txtTarget.Text);
+        }
+
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            /* remember last list index */
+            int lastIndex = cbFoldersList.SelectedIndex;
+
+            /* refresh */
+            MainForm_Load(sender, e);
+
+             /* return last list index */
+            cbFoldersList.SelectedIndex = lastIndex;
+        }
+
+
+        private void btnApply_Click(object sender, EventArgs e)
+        {
+            /* if directory exists */
+            if (DirectoryExists())
+            {
+                /* if directory writable */
+                string result = DirectoryWritable();
+                if (result == null)
+                {
+                    new Move(
+                        folders[cbFoldersList.SelectedIndex][0],
+                        folders[cbFoldersList.SelectedIndex][1],
+                        txtTarget.Text, chbContent.Checked);
+
+                    /* refresh */
+                    btnRefresh_Click(sender, e);
+                    
+                    modify = true;
+                }
+                else
+                    MessageBox.Show(result, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void Move_Click(object sender, EventArgs e)
+
+        private void txtTarget_TextChanged(object sender, EventArgs e)
         {
-            // Какая кнопка была нажата, с теми параметрами и вызываю метод перемещения
-            if (sender == btnSetDesktop)
-            {
-                if (DirExists(tbDesktop.Text) && DirExists(lDesktop.Text))
-                    new Move("Desktop", lDesktop.Text, tbDesktop.Text);
-            }
-
-            else if (sender == btnSetDownloads)
-            {
-                if (DirExists(tbDownloads.Text) && DirExists(lDownloads.Text))
-                    new Move("{374DE290-123F-4565-9164-39C4925E467B}", lDownloads.Text, tbDownloads.Text);
-            }
-
-            else if (sender == btnSetPersonal)
-            {
-                if (DirExists(tbPersonal.Text) && DirExists(lPersonal.Text))
-                    new Move("Personal", lPersonal.Text, tbPersonal.Text);
-            }
-
-            else if (sender == btnSetVideo)
-            {
-                if (DirExists(tbVideo.Text) && DirExists(lVideo.Text))
-                    new Move("My Video", lVideo.Text, tbVideo.Text);
-            }
-
-            else if (sender == btnSetMusic)
-            {
-                if (DirExists(tbMusic.Text) && DirExists(lMusic.Text))
-                    new Move("My Music", lMusic.Text, tbMusic.Text);
-            }
-
-            else if (sender == btnSetPictures)
-            {
-                if (DirExists(tbPictures.Text) && DirExists(lPictures.Text))
-                    new Move("My Pictures", lPictures.Text, tbPictures.Text);
-            }
-
-            // Обновление после перемещения
-            Form1_Load(sender, e);
+            newFolders[cbFoldersList.SelectedIndex] = txtTarget.Text;
+            btnApply.Enabled = CheckSimilarity(folders[cbFoldersList.SelectedIndex][1], txtTarget.Text);
         }
 
-        // Проверка на пустоту строки 
-        private void OnTextChanged(object sender, EventArgs e)
+
+        private bool CheckSimilarity(string source, string target)
+        { return !source.Equals(target); }
+
+
+        private bool DirectoryExists()
         {
-            if (sender == tbDesktop)
-                if (tbDesktop.Text.Equals(""))
-                    btnSetDesktop.Enabled = false;
-                else btnSetDesktop.Enabled = true;
+            if (Directory.Exists(txtTarget.Text)) return true;
+            else MessageBox.Show(Resources.FolderNotFound, Text, MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-            else if (sender == tbDownloads)
-                if (tbDownloads.Text.Equals(""))
-                    btnSetDownloads.Enabled = false;
-                else btnSetDownloads.Enabled = true;
+            txtTarget.SelectAll();
+            txtTarget.Focus();
 
-            else if (sender == tbPersonal)
-                if (tbPersonal.Text.Equals(""))
-                    btnSetPersonal.Enabled = false;
-                else btnSetPersonal.Enabled = true;
-
-            else if (sender == tbVideo)
-                if (tbVideo.Text.Equals(""))
-                    btnSetVideo.Enabled = false;
-                else btnSetVideo.Enabled = true;
-
-            else if (sender == tbMusic)
-                if (tbMusic.Text.Equals(""))
-                    btnSetMusic.Enabled = false;
-                else btnSetMusic.Enabled = true;
-
-            else if (sender == tbPictures)
-                if (tbPictures.Text.Equals(""))
-                    btnSetPictures.Enabled = false;
-                else btnSetPictures.Enabled = true;
+            return false;
         }
 
-        // Проверка наличия папки
-        private bool DirExists(string dir)
+
+        private string DirectoryWritable()
         {
-            if (!Directory.Exists(dir))
+            try
             {
-                MessageBox.Show("Folder \"" + dir + "\" doesn't exist!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                File.Create(txtTarget.Text + "\\check").Close();
+                File.Delete(txtTarget.Text + "\\check");
             }
-            else return true;
+            catch (Exception e)
+            { return e.Message; }
+
+            return null;
         }
     }
 }
